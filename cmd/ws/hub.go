@@ -1,4 +1,4 @@
-package main
+package ws
 
 type Game struct {
 	playerOne *Client
