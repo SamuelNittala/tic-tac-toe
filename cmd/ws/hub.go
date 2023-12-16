@@ -1,8 +1,13 @@
 package ws
 
+import (
+	tictactoe "tictactoe.com/m/internal/core"
+)
+
 type Game struct {
 	playerOne *Client
 	playerTwo *Client
+	gameData  tictactoe.TicTacToe
 }
 
 type Hub struct {
@@ -38,6 +43,7 @@ func (h *Hub) run() {
 				h.games = append(h.games, &Game{
 					fp,
 					sp,
+					tictactoe.CreateGrid(),
 				})
 			}
 		case client := <-h.unregister:

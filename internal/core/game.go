@@ -16,7 +16,7 @@ type Cell struct {
 
 type TicTacToe [][]Cell
 
-func createGrid() TicTacToe {
+func CreateGrid() TicTacToe {
 	var grid TicTacToe
 	for i := 0; i < 3; i++ {
 		grid_row := [3]Cell{}
@@ -87,6 +87,6 @@ func (t TicTacToe) checkRightDiagonalForSameValue() bool {
 	return first_value == second_value && first_value == third_value && second_value == third_value
 }
 
-func (t TicTacToe) checkForWin(val CellValue) {
+func (t TicTacToe) checkForWin(CellValue) {
 
 }
