@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -30,20 +31,28 @@ import (
 
 type Game struct {
 	id          string
-	player1     string
-	player2     string
+	player1     Player
+	player2     Player
 	gameState   string
 	sendChan    chan string
 	receiveChan chan string
-	conn        *websocket.Conn
 }
 
-func createGame(player1, player2 string) Game {
+type Player struct {
+	conn      *websocket.Conn
+	inGame    bool
+	searching bool
+	id        string
+}
+
+type PlayerPool []Player
+
+func createGame(player1, player2 Player) Game {
 	return Game{
 		id:          "1",
 		player1:     player1,
 		player2:     player2,
-		gameState:   "1/" + player1 + "/.../.../.../" + player1,
+		gameState:   "1/" + player1.id + "/.../.../.../" + player1.id,
 		sendChan:    make(chan string),
 		receiveChan: make(chan string),
 	}
@@ -51,26 +60,29 @@ func createGame(player1, player2 string) Game {
 
 func (game *Game) listenForMoves() {
 	defer func() {
-		game.conn.Close()
+		game.player1.conn.Close()
+		game.player2.conn.Close()
 	}()
 	for {
-		_, byteState, err := game.conn.ReadMessage()
-		gameState := string(byteState[:])
-		fmt.Println(gameState)
+		_, byteState, err := game.player1.conn.ReadMessage()
+		_, byteState2, err := game.player2.conn.ReadMessage()
+		p1msg := string(byteState[:])
+		p2msg := string(byteState2[:])
+		fmt.Println(p1msg, p2msg)
 		if err != nil {
 			log.Println(err)
 		}
-		game_split_state := strings.Split(gameState, "/")
+		game_split_state := strings.Split(p1msg, "/")
 
 		current_player := game_split_state[1]
 		player_to_move := game_split_state[len(game_split_state)-1]
 
 		// allow only if the current player is to move
 		if current_player == player_to_move {
-			if current_player == game.player1 {
-				game.gameState = strings.Join(game_split_state[:len(game_split_state)-1], "/") + "/" + game.player2
+			if current_player == game.player1.id {
+				game.gameState = strings.Join(game_split_state[:len(game_split_state)-1], "/") + "/" + game.player2.id
 			} else {
-				game.gameState = strings.Join(game_split_state[:len(game_split_state)-1], "/") + "/" + game.player1
+				game.gameState = strings.Join(game_split_state[:len(game_split_state)-1], "/") + "/" + game.player1.id
 			}
 		}
 		game.sendChan <- game.gameState
@@ -85,25 +97,48 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-func gameLoop(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-	}
-	game := createGame("a", "b")
-	game.conn = conn
+func (game *Game) start(w http.ResponseWriter, r *http.Request) {
 	go game.listenForMoves()
-	x, ok := <-game.sendChan
-	if ok {
-		fmt.Println(x)
-	}
+}
 
+func search(w http.ResponseWriter, r *http.Request, playerPool []Player) Game {
+	var avail_players []Player
+	// find players
+	for _, player := range playerPool {
+		if !player.inGame && player.searching {
+			avail_players = append(avail_players, player)
+		}
+	}
+	return createGame(avail_players[0], avail_players[1])
+}
+
+func createPlayer(conn *websocket.Conn) Player {
+	return Player{
+		conn:   conn,
+		id:     uuid.New().String(),
+		inGame: false,
+	}
 }
 
 func main() {
 	flag.Parse()
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		gameLoop(w, r)
+	player_pool := make([]Player, 0)
+	http.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println(err)
+		}
+		player := createPlayer(conn)
+		player_pool = append(player_pool, player)
+		fmt.Println(player_pool)
+		//listen
+		_, message, err := conn.ReadMessage()
+		if string(message) == "search" {
+			player.searching = true
+			fmt.Println(player_pool)
+			// game := search(w, r, player_pool)
+			// fmt.Println(game)
+		}
 	})
 	server := &http.Server{
 		Addr:              *addr,
