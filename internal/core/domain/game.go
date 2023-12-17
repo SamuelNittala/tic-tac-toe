@@ -1,4 +1,4 @@
-package tictactoe
+package domain
 
 type CellValue int
 
@@ -30,10 +30,6 @@ func CreateGrid() TicTacToe {
 		grid = append(grid, grid_row[:])
 	}
 	return grid
-}
-
-func (t TicTacToe) set(i int, j int, value CellValue) {
-	t[i][j].value = value
 }
 
 func (t TicTacToe) isGridFull() bool {
