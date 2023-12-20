@@ -83,6 +83,4 @@ func (t TicTacToe) checkRightDiagonalForSameValue() bool {
 	return first_value == second_value && first_value == third_value && second_value == third_value
 }
 
-func (t TicTacToe) checkForWin(CellValue) {
-
-}
+func (t TicTacToe) checkForWin(CellValue) {}
