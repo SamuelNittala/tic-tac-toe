@@ -17,6 +17,7 @@ type GameHub struct {
 	player2   *Player
 	broadcast chan []byte
 	toMove    ToMove
+	gameState string
 }
 
 func NewGameHub(player1, player2 *Player) *GameHub {
@@ -25,8 +26,9 @@ func NewGameHub(player1, player2 *Player) *GameHub {
 		id:        gameId,
 		player1:   player1,
 		player2:   player2,
-		toMove:    PlayerOne,
+		toMove: PlayerOne,,
 		broadcast: make(chan []byte),
+		gameState: gameId + "/created/.../.../.../",
 	}
 }
 
@@ -48,4 +50,16 @@ func (g *GameHub) run() {
 		}
 	}
 
+}
+
+func (g *GameHub) validateGame(id, gameState string) {
+	// checking if the correct player is making the move
+	if g.toMove == PlayerOne && g.player1.id == id {
+		g.toMove = PlayerTwo
+		g.gameState = gameState
+	}
+	if g.toMove == PlayerTwo && g.player2.id == id {
+		g.toMove = PlayerOne
+		g.gameState = gameState
+	}
 }

@@ -60,7 +60,7 @@ func (p *Player) findOpponent(searchPool *[]*Player) *Player {
 	}
 	// If no match found, add this player to the pool and return nil
 	*searchPool = append(*searchPool, p)
-	fmt.Println("search pool", *searchPool)
+	// fmt.Println("search pool", *searchPool)
 	return nil
 }
 
@@ -91,16 +91,15 @@ func (p *Player) readPump(searchPool *[]*Player) {
 				opponent.gameHub = newGame
 				go newGame.run()
 				// fmt.Println("Game created" + newGame.id)
-				p.gameHub.broadcast <- []byte(newGame.id + "/.../.../.../")
+				p.gameHub.broadcast <- []byte(newGame.gameState) 
 			}
 		} else {
 			if p.gameHub != nil {
 				message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 				currentPlayerToMove := p.gameHub.toMove
-				if currentPlayerToMove == PlayerOne && p.id == p.gameHub.player1.id  {
-
-				}
-				p.gameHub.broadcast <- message
+				// fmt.Println(currentPlayerToMove, p)
+				p.gameHub.validateGame(p.id, string(message))
+				p.gameHub.broadcast <- []byte(p.gameHub.gameState) 
 			}
 		}
 		// c.hub.broadcast <- message
@@ -138,7 +137,7 @@ func ServeWs(searchPool *[]*Player, gamePool []*GameHub, w http.ResponseWriter, 
 		id:   uuid.New().String(),
 		send: make(chan []byte, 256),
 	}
-	fmt.Println("Added player " + player.id)
+	// fmt.Println("Added player " + player.id)
 	go player.readPump(searchPool)
 	go player.writePump()
 	// Allow collection of memory referenced by the caller by doing all work in
