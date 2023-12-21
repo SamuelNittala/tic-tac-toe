@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"tictactoe.com/m/domain"
 )
 
 const (
@@ -49,7 +50,7 @@ func (p *Player) findOpponent(searchPool *[]*Player) *Player {
 	// fmt.Println("search pool", searchPool)
 	if len(*searchPool) > 0 {
 		for i, playerTwo := range *searchPool {
-			fmt.Println(playerTwo, "p2")
+			// fmt.Println(playerTwo, "p2")
 			if playerTwo.id != p.id {
 				// Found a match, remove playerTwo from the pool
 				tempPool := *searchPool
@@ -85,21 +86,22 @@ func (p *Player) readPump(searchPool *[]*Player) {
 			opponent := p.findOpponent(searchPool)
 			// fmt.Println(opponent, "opponent for"+p.id)
 			if opponent != nil {
-				// fmt.Println("oppenent for" + p.id + "is " + opponent.id)
+				fmt.Println("oppenent for" + p.id + "is " + opponent.id)
 				newGame := NewGameHub(p, opponent)
 				p.gameHub = newGame
 				opponent.gameHub = newGame
 				go newGame.run()
 				// fmt.Println("Game created" + newGame.id)
-				p.gameHub.broadcast <- []byte(newGame.gameState) 
+				p.gameHub.broadcast <- p.gameHub.gameState
 			}
 		} else {
 			if p.gameHub != nil {
 				message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-				currentPlayerToMove := p.gameHub.toMove
 				// fmt.Println(currentPlayerToMove, p)
 				p.gameHub.validateGame(p.id, string(message))
-				p.gameHub.broadcast <- []byte(p.gameHub.gameState) 
+				pgs := domain.ParseGameState(string(message))
+				fmt.Println(pgs)
+				p.gameHub.broadcast <- p.gameHub.gameState
 			}
 		}
 		// c.hub.broadcast <- message
