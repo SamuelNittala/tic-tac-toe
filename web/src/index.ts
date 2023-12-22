@@ -18,6 +18,7 @@ let playerChar = null;
 
 const button = document.createElement('button');
 button.innerHTML = 'Search';
+button.id = 'search-btn'
 button.addEventListener('click', (ev) => {
   console.log('searching', conn, ev);
   conn.send('search');
@@ -25,6 +26,18 @@ button.addEventListener('click', (ev) => {
 
 const search = document.createElement('p')
 search.innerHTML = 'searching...'
+search.id = 'search-tag'
+
+const gridDiv: HTMLElement = document.createElement('table');
+
+const removeSearchUI = () => {
+  if (document.getElementById('search-tag')) {
+    appDiv.removeChild(search)
+  }
+  if (document.getElementById('search-btn')) {
+    appDiv.removeChild(button)
+  }
+}
 
 const parseWebSocketMessage = (msg: string) => {
   const split_msg = msg.split('/');
@@ -38,33 +51,52 @@ const parseWebSocketMessage = (msg: string) => {
     isPlayerMove = gameState[4] === "true";
     playerChar = gameState[5];
     constructGrid(boardState);
-    appDiv.removeChild(search);
+    removeSearchUI();
   } else if (msg == "searching") {
-    appDiv.appendChild(search)
-    appDiv.removeChild(button);
+    appDiv.appendChild(search);
+    if (document.getElementById('search-btn')) {
+      appDiv.removeChild(button)
+    }
   } 
 };
 
-const constructGameState = (boardState: string[]) => {
-  return boardState.reduce((acc, curr, index) => {
-    if (index === 0) {
-      return curr;
+const constructGameState = (row, col) => {
+  const newBoardState = [];
+  for (let i = 0; i < boardState.length; ++i) {
+    const newRow = [];
+    for (let j  = 0; j < boardState[i].length; ++j) {
+      if (i === row && j === col) {
+        newRow.push(playerChar);
+      } else {
+        newRow.push(boardState[i][j])
+      }
     }
-    return acc + "/" + curr;
-  }, "");
+    newBoardState.push(newRow);
+  }
+  return newBoardState[0].join('') + "/" + newBoardState[1].join('') + "/" + newBoardState[2].join('') + "/"; 
 }
 
+
 const constructGrid = (boardState: string[]) => {
-  const gridDiv: HTMLElement = document.createElement('table');
-  gridDiv.className = 'grid-table';
+  gridDiv.className = isPlayerMove ? 'grid-table active' : 'grid-table wait';
   if (boardState) {
     for (let i = 0; i < boardState.length; ++i) {
-      const rowDiv = document.createElement('tr');
-      rowDiv.className = 'grid-row';
+      const rowId = `grid-row-${i+1}`;
+      let rowDiv = document.getElementById(rowId);
+      if (!rowDiv) {
+        rowDiv = document.createElement('tr')
+        rowDiv.className = 'grid-row';
+        rowDiv.id = rowId 
+      }
       for (let j = 0; j < boardState[i].length; ++j) {
-        const cell = document.createElement('td');
+        const cellId = `grid-cell-${i+1}-${j+1}`
+        let cell = document.getElementById(cellId);
+        if (!cell) {
+            cell = document.createElement('td');
+            cell.className = 'grid-cell';
+            cell.id = cellId
+        }
         const cellValue = boardState[i][j];
-        cell.className = 'grid-cell';
         if (cellValue === '.') {
           cell.innerHTML = CellType.Empty;
         } else if (cellValue == '*') {
@@ -74,7 +106,7 @@ const constructGrid = (boardState: string[]) => {
         }
         cell.addEventListener('click', (ev) => {
           if (cell.innerHTML == CellType.Empty && isPlayerMove) {
-            conn.send(gameId + "/" + constructGameState(boardState))
+            conn.send(gameId + "/" + constructGameState(i, j))
           }
         });
         rowDiv.appendChild(cell);
