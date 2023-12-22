@@ -32,6 +32,10 @@ func main() {
 	flag.Parse()
 	searchPool := make([]*ws.Player, 0)
 	gamePool := make([]*ws.GameHub, 0)
+
+	fs := http.FileServer(http.Dir("web/dist"))
+	http.Handle("/", fs)
+
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		ws.ServeWs(&searchPool, gamePool, w, r)
 	})
