@@ -37,12 +37,12 @@ func (g *GameHub) run() {
 		select {
 		case message := <-g.broadcast:
 			select {
-			case g.player1.send <- []byte(message + g.isPlayerToMove(g.player1.id)):
+			case g.player1.send <- []byte(message + g.isPlayerToMove(g.player1.id) + "/*"):
 			default:
 				close(g.player1.send)
 			}
 			select {
-			case g.player2.send <- []byte(message + g.isPlayerToMove(g.player2.id)):
+			case g.player2.send <- []byte(message + g.isPlayerToMove(g.player2.id) + "/o"):
 			default:
 				close(g.player2.send)
 			}

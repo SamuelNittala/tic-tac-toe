@@ -93,6 +93,8 @@ func (p *Player) readPump(searchPool *[]*Player) {
 				go newGame.run()
 				// fmt.Println("Game created" + newGame.id)
 				p.gameHub.broadcast <- p.gameHub.gameState
+			} else {
+				p.send <- []byte("searching")
 			}
 		} else {
 			if p.gameHub != nil {
