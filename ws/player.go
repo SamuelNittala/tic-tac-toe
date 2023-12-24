@@ -110,6 +110,8 @@ func (p *Player) readPump(searchPool *[]*Player) {
 					p.gameHub.broadcast <- "Player One Won/"
 				} else if currGameResult == domain.PlayerTwoWon {
 					p.gameHub.broadcast <- "Playe Two Won/"
+				} else if currGameResult == domain.Tie {
+					p.gameHub.broadcast <- "Tied/"
 				}
 			}
 		}
