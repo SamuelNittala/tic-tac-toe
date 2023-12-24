@@ -585,11 +585,30 @@ var CellType;
     CellType["Circle"] = "O";
 })(CellType || (CellType = {}));
 let boardState = null;
+let gameId = null;
 let isPlayerMove = false;
+let playerChar = null;
+const button = document.createElement("button");
+button.innerHTML = "Search";
+button.id = "search-btn";
+button.addEventListener("click", (ev)=>{
+    console.log("searching", conn, ev);
+    conn.send("search");
+});
+const search = document.createElement("p");
+search.innerHTML = "searching...";
+search.id = "search-tag";
+const gridDiv = document.createElement("table");
+gridDiv.id = "game-grid";
+const removeSearchUI = ()=>{
+    if (document.getElementById("search-tag")) appDiv.removeChild(search);
+    if (document.getElementById("search-btn")) appDiv.removeChild(button);
+};
 const parseWebSocketMessage = (msg)=>{
     const split_msg = msg.split("/");
-    if (split_msg.length > 0) {
+    if (split_msg.length === 6) {
         const gameState = msg.split("/");
+        gameId = gameState[0];
         const row1 = gameState[1];
         const row2 = gameState[2];
         const row3 = gameState[3];
@@ -598,25 +617,55 @@ const parseWebSocketMessage = (msg)=>{
             row2,
             row3
         ];
+        isPlayerMove = gameState[4] === "true";
+        playerChar = gameState[5];
         constructGrid(boardState);
+        removeSearchUI();
+    } else if (msg == "searching") {
+        appDiv.appendChild(search);
+        if (document.getElementById("search-btn")) appDiv.removeChild(button);
+    } else {
+        appDiv.removeChild(gridDiv);
+        const gameMessage = document.createElement("p");
+        const gameState = msg.split("/");
+        gameMessage.innerHTML = gameState[0];
+        appDiv.appendChild(gameMessage);
     }
 };
+const constructGameState = (row, col)=>{
+    const newBoardState = [];
+    for(let i = 0; i < boardState.length; ++i){
+        const newRow = [];
+        for(let j = 0; j < boardState[i].length; ++j)if (i === row && j === col) newRow.push(playerChar);
+        else newRow.push(boardState[i][j]);
+        newBoardState.push(newRow);
+    }
+    return newBoardState[0].join("") + "/" + newBoardState[1].join("") + "/" + newBoardState[2].join("") + "/";
+};
 const constructGrid = (boardState)=>{
-    const gridDiv = document.createElement("table");
-    gridDiv.className = "grid-table";
+    gridDiv.className = isPlayerMove ? "grid-table active" : "grid-table wait";
     if (boardState) for(let i = 0; i < boardState.length; ++i){
-        const rowDiv = document.createElement("tr");
-        rowDiv.className = "grid-row";
+        const rowId = `grid-row-${i + 1}`;
+        let rowDiv = document.getElementById(rowId);
+        if (!rowDiv) {
+            rowDiv = document.createElement("tr");
+            rowDiv.className = "grid-row";
+            rowDiv.id = rowId;
+        }
         for(let j = 0; j < boardState[i].length; ++j){
-            const cell = document.createElement("td");
+            const cellId = `grid-cell-${i + 1}-${j + 1}`;
+            let cell = document.getElementById(cellId);
+            if (!cell) {
+                cell = document.createElement("td");
+                cell.className = "grid-cell";
+                cell.id = cellId;
+            }
             const cellValue = boardState[i][j];
-            cell.className = "grid-cell";
             if (cellValue === ".") cell.innerHTML = "E";
             else if (cellValue == "*") cell.innerHTML = "X";
             else cell.innerHTML = "O";
             cell.addEventListener("click", (ev)=>{
-                console.log("cell-val", cellValue);
-                if (cell.innerHTML == "E" && isPlayerMove) cell.innerHTML = "X";
+                if (cell.innerHTML == "E" && isPlayerMove) conn.send(gameId + "/" + constructGameState(i, j));
             });
             rowDiv.appendChild(cell);
         }
@@ -625,17 +674,8 @@ const constructGrid = (boardState)=>{
     else return;
     appDiv.appendChild(gridDiv);
 };
-const searchButton = ()=>{
-    const button = document.createElement("button");
-    button.innerHTML = "Search";
-    button.addEventListener("click", (ev)=>{
-        console.log("searching", conn, ev);
-        conn.send("search");
-    });
-    return button;
-};
 conn.onmessage = (ev)=>parseWebSocketMessage(ev.data);
-appDiv.appendChild(searchButton());
+appDiv.appendChild(button);
 
 },{}]},["gmPuC","h7u1C"], "h7u1C", "parcelRequire2d1f")
 

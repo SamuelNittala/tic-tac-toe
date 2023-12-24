@@ -14,18 +14,6 @@ const (
 
 type TicTacToe [][]CellValue
 
-// func CreateGrid() TicTacToe {
-// 	var grid TicTacToe
-// 	for i := 0; i < 3; i++ {
-// 		grid_row := [3]Cell{}
-// 		for j := 0; j < 3; j++ {
-// 			grid_row[j] =
-// 		}
-// 		grid = append(grid, grid_row[:])
-// 	}
-// 	return grid
-// }
-
 func (t TicTacToe) isGridFull() bool {
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 3; j++ {
@@ -37,49 +25,99 @@ func (t TicTacToe) isGridFull() bool {
 	return true
 }
 
-func (t TicTacToe) checkRowForSameValue(row int) bool {
-	first_value := t[row][0]
-	for i := 1; i < 3; i++ {
-		if t[row][i] != first_value {
-			return false
+func (t TicTacToe) checkRowsForSameValue() CellValue {
+	for r := 0; r < 3; r++ {
+		first_value := t[r][0]
+		for i := 1; i < 3; i++ {
+			if t[r][i] != first_value {
+				return Empty
+			}
 		}
+		return first_value
 	}
-	return true
+	return Empty
 }
 
-func (t TicTacToe) checkColForSameValue(col int) bool {
-	first_value := t[0][col]
-	for i := 1; i < 3; i++ {
-		if t[i][col] != first_value {
-			return false
+func (t TicTacToe) checkColsForSameValue() CellValue {
+	for c := 0; c < 3; c++ {
+		first_value := t[0][c]
+		for i := 1; i < 3; i++ {
+			if t[i][c] != first_value {
+				return Empty
+			}
 		}
+		return first_value
 	}
-	return true
+	return Empty
 }
 
-func (t TicTacToe) checkLeftDiagonalsForSameValue() bool {
+func (t TicTacToe) checkLeftDiagonalsForSameValue() CellValue {
 	first_value := t[0][0]
 	for i := 1; i < 3; i++ {
 		for j := 1; j < 3; j++ {
 			if t[i][j] != first_value {
-				return false
+				return Empty
 			}
 		}
 	}
-	return true
+	return first_value
 }
 
-func (t TicTacToe) checkRightDiagonalForSameValue() bool {
+func (t TicTacToe) checkRightDiagonalForSameValue() CellValue {
 	// TODO: make it dynamic in future, if we increase the grid size
 	first_value := t[0][2]
 	second_value := t[1][1]
 	third_value := t[2][0]
-	return first_value == second_value && first_value == third_value && second_value == third_value
+	if first_value == second_value && first_value == third_value && second_value == third_value {
+		return first_value
+	}
+	return Empty
 }
 
-func (t TicTacToe) checkForWin(CellValue) {}
+func (t TicTacToe) checkForWin() GameResult {
+	// check each row for win
+	// row - 0
+	rowCheck := t.checkRowsForSameValue()
+	if rowCheck != Empty {
+		if rowCheck == Cross {
+			return PlayerOneWon
+		}
+		return PlayerTwoWon
+	}
+	colCheck := t.checkColsForSameValue()
+	if colCheck != Empty {
+		if colCheck == Cross {
+			return PlayerOneWon
+		}
+		return PlayerTwoWon
+	}
+	leftDiagCheck := t.checkLeftDiagonalsForSameValue()
+	if leftDiagCheck != Empty {
+		if leftDiagCheck == Cross {
+			return PlayerOneWon
+		}
+		return PlayerTwoWon
+	}
+	rightDiagCheck := t.checkRightDiagonalForSameValue()
+	if rightDiagCheck != Empty {
+		if rightDiagCheck == Cross {
+			return PlayerOneWon
+		}
+		return PlayerTwoWon
+	}
+	return Continue
+}
 
-func ParseGameState(gameState string) TicTacToe {
+type GameResult int
+
+const (
+	Continue GameResult = iota
+	PlayerOneWon
+	PlayerTwoWon
+	Tie
+)
+
+func GetGameState(gameState string) GameResult {
 	splitGameState := strings.Split(gameState, "/")
 
 	firstRow := splitGameState[1]
@@ -103,5 +141,5 @@ func ParseGameState(gameState string) TicTacToe {
 		}
 		parsedGameState = append(parsedGameState, currCellRow)
 	}
-	return parsedGameState
+	return parsedGameState.checkForWin()
 }

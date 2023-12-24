@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"tictactoe.com/m/domain"
 )
 
 const (
@@ -99,14 +100,19 @@ func (p *Player) readPump(searchPool *[]*Player) {
 		} else {
 			if p.gameHub != nil {
 				message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-				// fmt.Println(currentPlayerToMove, p)
 				p.gameHub.validateGame(p.id, string(message))
-				// pgs := domain.ParseGameState(string(message))
-				p.gameHub.gameState = string(message)
-				p.gameHub.broadcast <- p.gameHub.gameState
+				currGameResult := domain.GetGameState(p.gameHub.gameState)
+				fmt.Println(currGameResult, "gresult")
+				if currGameResult == domain.Continue {
+					p.gameHub.gameState = string(message)
+					p.gameHub.broadcast <- p.gameHub.gameState
+				} else if currGameResult == domain.PlayerOneWon {
+					p.gameHub.broadcast <- "Player One Won/"
+				} else if currGameResult == domain.PlayerTwoWon {
+					p.gameHub.broadcast <- "Playe Two Won/"
+				}
 			}
 		}
-		// c.hub.broadcast <- message
 	}
 }
 

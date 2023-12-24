@@ -29,6 +29,7 @@ search.innerHTML = 'searching...'
 search.id = 'search-tag'
 
 const gridDiv: HTMLElement = document.createElement('table');
+gridDiv.id = "game-grid"
 
 const removeSearchUI = () => {
   if (document.getElementById('search-tag')) {
@@ -57,6 +58,12 @@ const parseWebSocketMessage = (msg: string) => {
     if (document.getElementById('search-btn')) {
       appDiv.removeChild(button)
     }
+  } else {
+    appDiv.removeChild(gridDiv)
+    const gameMessage = document.createElement('p')
+    const gameState = msg.split('/');
+    gameMessage.innerHTML = gameState[0] 
+    appDiv.appendChild(gameMessage)
   } 
 };
 

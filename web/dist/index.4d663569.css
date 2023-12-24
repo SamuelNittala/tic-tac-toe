@@ -8,6 +8,14 @@ h1, h2 {
   margin-left: 20%;
 }
 
+.grid-table.active {
+  background-color: green;
+}
+
+.grid-table.wait {
+  background-color: red;
+}
+
 .grid-row {
   background-color: #fff;
 }
