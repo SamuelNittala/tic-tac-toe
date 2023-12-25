@@ -1,0 +1,25 @@
+h1,
+h2 {
+  font-family: Lato;
+}
+
+.grid-table {
+  cursor: pointer;
+  margin-left: 20%;
+  background-color: black;
+}
+.grid-table.active {
+  background-color: green;
+}
+.grid-table.wait {
+  background-color: red;
+}
+
+.grid-row {
+  background-color: white;
+}
+
+.grid-cell {
+  padding: 30px;
+  background-color: white;
+}
